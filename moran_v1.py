@@ -1,32 +1,44 @@
 
+from appscript import k
 import matplotlib as mpl 
 import numpy as np
 import sys
 import os
 import pandas as pd
 import test
+from scipy import special, optimize, integrate
 
-def run_moran_process(N, r, num_muts, pop_type): 
+def run_moran_process(num_muts, r, N, pop_type): 
     ## N is the population size ,
     # r is the relative fitness of muts:wts
     # and num_muts is the initial condition for mutants
-    fix_prob = pd.NA
-    fix_time = pd.NA
-    ##TODO: purpose of this function is to output fixation probability (fix_prob) and fixation time (fix_time)
-    # for given input simulation parameters
+    fix_prob, fix_time = 0,0
     return fix_prob, fix_time
 
-def prob_fixation(num_muts,r, N, pop_type):
-    if pop_type == "well_mixed" or "ring":
-        return prob_fixation_well_mixed(num_muts, r, N)
-    else:
-        return prob_fixation_other(num_muts, r, N)
+def fix_prob(l, N, r, Tneg_Tpos_func):
+    first = lambda j,k: np.product([Tneg_Tpos_func(x) for x in range(j,k+1)])
+    second = lambda k, top: np.sum([first(k, z) for z in range(k, top)])
+    numerator = 1 + second(1, l)
+    denominator = 1 + second(1, N)
+    return numerator/denominator 
 
-def prob_fixation_well_mixed(num_muts, r, N):
-    return (1 - (1/r**num_muts))/(1-(1/r**N))
+def well_mixed_prob(l, N, r):
+    return fix_prob(l, N, r, lambda x: 1/r)
 
-def prob_fixation_other(num_muts, r, N):
-   return (1 - (1/r**(2*num_muts)))/(1-(1/r**(2*N))) 
+def ring_prob(l,N,r):
+    return well_mixed_prob(l, N, r)
 
-def ave_time_to_fixation():
-    return 
+def star_prob(l,N,r):
+    return fix_prob(l, N, r, lambda x: 1/r**2)
+
+def test_fix_prob():
+    x= round(well_mixed_prob(1, 50, 2), 3)
+    print(x)
+    assert(x == 0.500)
+    y = round(star_prob(1, 50,2), 3)
+    print(y)
+    assert(y == 0.750)
+    return
+
+test_fix_prob()
+
